@@ -3,7 +3,6 @@ import lombok.AllArgsConstructor;
 
 import java.sql.*;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -101,7 +100,7 @@ public class PostgresDB {
     }
 
 
-    public void writeToDB(Map<Long, Organization> organizationsToDB) throws SQLException {
+    public void writeToDB(Set<Organization> organizationsToDB) throws SQLException {
         Connection connection = connect();
 
         String insertQuery = "INSERT INTO MetaPrimeTask.organization (ogrn, inn, name, address, director, capital, date) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -110,14 +109,14 @@ public class PostgresDB {
             if (connection != null) {
                 PreparedStatement preparedStatement = connection.prepareStatement(insertQuery);
 
-                for (Map.Entry<Long, Organization> entry : organizationsToDB.entrySet()){
-                    preparedStatement.setLong(  1, entry.getKey());
-                    preparedStatement.setString(2, entry.getValue().getInn());
-                    preparedStatement.setString(3, entry.getValue().getName());
-                    preparedStatement.setString(4, entry.getValue().getAddress());
-                    preparedStatement.setString(5, entry.getValue().getDirector());
-                    preparedStatement.setInt(   6, entry.getValue().getCapital());
-                    preparedStatement.setDate(  7, new java.sql.Date(entry.getValue().getDate().getTime()));
+                for (Organization org : organizationsToDB){
+                    preparedStatement.setLong(  1, org.getOgrn());
+                    preparedStatement.setString(2, org.getInn());
+                    preparedStatement.setString(3, org.getName());
+                    preparedStatement.setString(4, org.getAddress());
+                    preparedStatement.setString(5, org.getDirector());
+                    preparedStatement.setInt(   6, org.getCapital());
+                    preparedStatement.setDate(  7, new java.sql.Date(org.getDate().getTime()));
                     preparedStatement.addBatch();
                 }
 

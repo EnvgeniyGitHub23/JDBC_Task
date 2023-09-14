@@ -18,9 +18,9 @@ import java.util.*;
 
 public class ReadXML {
 
-    public static Map<Long, Organization> readFIle(Set<Long> ogrnListFromDB) {
+    public static Set<Organization> readFIle(Set<Long> ogrnSetFromDB) {
 
-        Map<Long, Organization> result = new HashMap<>();
+        Set<Organization> result = new HashSet<>();
 
         // читаем файл
         try {
@@ -44,10 +44,11 @@ public class ReadXML {
                     long ogrnLong = Long.parseLong(element.getElementsByTagName("ОГРН").item(0).getTextContent()); //тут нужен TRY CATCH
 
                     //если такого ОГРН в БД нет, то добавляем организацию в Map
-                    if (!ogrnListFromDB.contains(ogrnLong)) {
+                    if (!ogrnSetFromDB.contains(ogrnLong)) {
 
                         Organization organization = new Organization();
 
+                        organization.setOgrn(Long.parseLong(element.getElementsByTagName("ОГРН").item(0).getTextContent())); //нужна проверка try catch
                         organization.setInn(element.getElementsByTagName("ИНН").item(0).getTextContent());
                         organization.setName(element.getElementsByTagName("Название").item(0).getTextContent());
                         organization.setAddress(element.getElementsByTagName("Адрес").item(0).getTextContent());
@@ -61,7 +62,7 @@ public class ReadXML {
                         } catch (ParseException e) {
                             e.printStackTrace();
                         }
-                        result.put(ogrnLong, organization);
+                        result.add(organization);
                     }
                 }
             }

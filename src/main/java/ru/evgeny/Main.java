@@ -1,17 +1,16 @@
 package ru.evgeny;
 
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Set;
 
 public class Main {
     public static void main(String[] args) throws SQLException {
 
         String user = "postgres";        // логин БД!!!
-        String password = "password";    //пароль БД!!!
+        String password = "pass";    //пароль БД!!!
 
           //Аргументы командной строки, только по одной строке за запуск
-//        args = new String[]{"createXML", "10000"};  // создать тестовый файл с N записей (1-10000)
+//        args = new String[]{"createXML", "5"};  // создать тестовый файл с N записей (1-10000)
 //        args = new String[]{"createSchema", user, password}; // создать схему и таблицу
 //        args = new String[]{"load", user, password};   // загрузить файл в БД
 //        args = new String[]{"deleteData", user, password};  // удалить данные из таблицы
@@ -56,13 +55,13 @@ public class Main {
                 PostgresDB postgresDB = new PostgresDB(args[1], args[2]);
 
                 // получаем все уникальные ОГРН из БД
-                Set<Long> ogrnFromDB = postgresDB.getAllOgrnFromDB();
+                Set<Long> ogrnSetFromDB = postgresDB.getAllOgrnFromDB();
 
                 // читаем из XML организации, ОГРН которых нет в БД
-                Map<Long, Organization> organizationsToDB = ReadXML.readFIle(ogrnFromDB);
+                Set<Organization> organizationsSetToDB = ReadXML.readFIle(ogrnSetFromDB);
 
                 // записываем в БД прочитанную коллекцию организаций Map<Organization>
-                postgresDB.writeToDB(organizationsToDB);
+                postgresDB.writeToDB(organizationsSetToDB);
 
             } else {
 
