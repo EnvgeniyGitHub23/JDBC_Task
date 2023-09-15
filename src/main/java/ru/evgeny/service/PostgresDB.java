@@ -1,6 +1,7 @@
 package ru.evgeny.service;
 import lombok.AllArgsConstructor;
 import ru.evgeny.entity.Organization;
+import ru.evgeny.xml.ManagerXML;
 
 import java.sql.*;
 import java.util.HashSet;
@@ -11,6 +12,8 @@ public class PostgresDB {
 
     private  String user; //данные для подключения к БД устанавливаются в конструкторе при создании экземпляра
     private  String password;
+
+
 
     private Connection connect() { //приватный метод для подключения к БД
         String jdbcUrl = "jdbc:postgresql://localhost:5432/postgres";
@@ -28,9 +31,10 @@ public class PostgresDB {
         return connection;
     }
 
-    public void createNewSchemaAndTable() throws SQLException { //метод для создания схемы и таблицы в БД (если он еще не созданы)
-        try (Connection connection = connect();
-             Statement statement = connection.createStatement()) {
+
+    private void createNewSchemaAndTable(Connection connection) throws SQLException { //метод для создания схемы и таблицы в БД (если он еще не созданы)
+
+        try (Statement statement = connection.createStatement()) {
 
             // Проверяем существование схемы перед созданием
             ResultSet schemaExistsResult = connection.getMetaData().getSchemas();
@@ -71,16 +75,16 @@ public class PostgresDB {
                 System.out.println("Таблица \"organization\" уже существует");
             }
         }
+
     }
 
 
 
-    public Set<Long> getAllOgrnFromDB() throws SQLException { //метод для получения сета ОГРН из БД
+    private Set<Long> getAllOgrnFromDB(Connection connection) throws SQLException { //метод для получения сета ОГРН из БД
 
         Set<Long> allOgrn = new HashSet<>();
 
-        try (Connection connection = connect();
-             Statement statement = connection.createStatement()) {
+        try (Statement statement = connection.createStatement()) {
 
             //проверяем перед записью существует ли таблица
             ResultSet tableExistsResult = connection.getMetaData().getTables(null, "metaprimetask", "organization", null);
@@ -121,10 +125,9 @@ public class PostgresDB {
                 String dropSchemaSQL = "DROP SCHEMA MetaPrimeTask CASCADE";
                 statement.executeUpdate(dropSchemaSQL);
                 System.out.println("схема \"MetaPrimeTask\" удалена");
-            }else {
+            } else {
                 System.out.println("схемы MetaPrimeTask в БД не существует");
             }
-
         }
     }
 
@@ -148,18 +151,8 @@ public class PostgresDB {
     }
 
 
-    public void writeToDB(Set<Organization> organizationsToDB) throws SQLException { //запись коллекции организаций Set в БД
+    private void writeToDB(Set<Organization> organizationsToDB, Connection connection) throws SQLException { //запись коллекции организаций Set в БД
         // Передаваемые данные в Set уже обработаны и не должны содержать ОГРН, имеющиеся в БД!
-
-        try (Connection connection = connect()) {
-            // проверяем перед записью существует ли таблица
-            ResultSet tableExistsResult = connection.getMetaData().getTables(null, "metaprimetask", "organization", null);
-            boolean tableExists = tableExistsResult.next();
-
-            if (!tableExists) { //если таблица НЕ существует, то сначала создаем ее
-                createNewSchemaAndTable();
-                System.out.println("создана таблица organization");
-            }
 
                 String insertQuery = "INSERT INTO MetaPrimeTask.organization (ogrn, inn, name, address, director, capital, date) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -178,17 +171,34 @@ public class PostgresDB {
                     //выполнение запроса на загрузку в БД
                     int[] insertCounts = preparedStatement.executeBatch();
                     System.out.println("В БД загружено: " + insertCounts.length + " записей");
-                }
-                System.out.println("не найдена таблица organization, данные не будут загружены в БД");
+
 
         } catch (SQLException e) {
+            System.out.println("ОШИБКА записи в БД!");
             e.printStackTrace();
         }
     }
 
+    public void loadDataToDB(ManagerXML managerXML)  { //метод читает ОГРН из БД, читает уникальные записи из файла и пишет в БД те, которых еще нет в БД
 
+        try (Connection connection = connect()){ //открываем  соединение
 
+            //создаем схему и таблицу, если они еще не созданы
+            createNewSchemaAndTable(connection);
 
+            //получаем все уникальные ОГРН из БД
+            Set<Long> ogrnSetFromDB = getAllOgrnFromDB(connection);
+
+            // читаем из XML организации, ОГРН которых нет в БД
+            Set<Organization> organizationsSetToDB = managerXML.readFIle(ogrnSetFromDB);
+
+            //записываем в БД прочитанную из файла коллекцию организаций
+            writeToDB(organizationsSetToDB, connection);
+
+        } catch (SQLException e){
+            System.out.println("ОШИБКА записи в БД!");
+        }
+    }
 }
 
 
