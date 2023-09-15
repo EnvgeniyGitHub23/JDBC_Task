@@ -1,5 +1,10 @@
 package ru.evgeny;
 
+import ru.evgeny.xml.CreateTestXML;
+import ru.evgeny.xml.ReadXML;
+import ru.evgeny.entity.Organization;
+import ru.evgeny.service.PostgresDB;
+
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -7,15 +12,14 @@ public class Main {
     public static void main(String[] args) throws SQLException {
 
         String user = "postgres";        // логин БД!!!
-        String password = "pass";    //пароль БД!!!
+        String password = "SQLRootPass";    //пароль БД!!!
 
           //Аргументы командной строки, только по одной строке за запуск
-//        args = new String[]{"createXML", "5"};  // создать тестовый файл с N записей (1-10000)
+//        args = new String[]{"createXML", "500"};  // создать тестовый файл с N записей (1-10000)
 //        args = new String[]{"createSchema", user, password}; // создать схему и таблицу
-//        args = new String[]{"load", user, password};   // загрузить файл в БД
+        args = new String[]{"load", user, password};   // загрузить файл в БД
 //        args = new String[]{"deleteData", user, password};  // удалить данные из таблицы
 //        args = new String[]{"deleteSchema", user, password}; // удалить таблицу и схему
-
 
 
         if (args.length > 0) {
@@ -51,7 +55,6 @@ public class Main {
 
             if (args[0].equals("load")) { // загружаем данные из файла в БД
                 checkLoginToDBInput(args);
-
                 PostgresDB postgresDB = new PostgresDB(args[1], args[2]);
 
                 // получаем все уникальные ОГРН из БД
@@ -60,26 +63,24 @@ public class Main {
                 // читаем из XML организации, ОГРН которых нет в БД
                 Set<Organization> organizationsSetToDB = ReadXML.readFIle(ogrnSetFromDB);
 
-                // записываем в БД прочитанную коллекцию организаций Map<Organization>
+                // записываем в БД прочитанную их файла коллекцию организаций
                 postgresDB.writeToDB(organizationsSetToDB);
 
             } else {
-
-                printHint();
+                printHint(); //если ничего не подошло то вывод подсказки
             }
-
-       } else printHint();
+       } else printHint();   //если нет аргументов то вывод подсказки
 
     }//main
 
-    private static void checkLoginToDBInput(String[] args){
+    private static void checkLoginToDBInput(String[] args){ //метод проверяет что введены учетные данные для подключения к БД
         if (args.length < 3) {
             System.out.println("вы не ввели учетные данные для подключения к БД");
             System.exit(1);
         }
     }
 
-    private static void printHint(){
+    private static void printHint(){  //вывод подсказки
         System.out.println("*****************************************************************************");
         System.out.println("Для создания заполненного файла введите createXML N (N от 1 до 10000 записей)");
         System.out.println("Для создания новой схемы и таблицы введите createSchema user password  (логин и пароль для postgres)");

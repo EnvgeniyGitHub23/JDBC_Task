@@ -1,10 +1,11 @@
-package ru.evgeny;
+package ru.evgeny.xml;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import ru.evgeny.entity.Organization;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,12 +19,14 @@ import java.util.*;
 
 public class ReadXML {
 
+    //метод читает уникальные значение из файла и возвразает коллекцию организаций, которых еще нет в БД
     public static Set<Organization> readFIle(Set<Long> ogrnSetFromDB) {
 
         Set<Organization> result = new HashSet<>();
 
         // читаем файл
         try {
+            // чтение из текущей папки файла organizations_sample_data.xml
             File file = new File("organizations_sample_data.xml");
 
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -35,15 +38,23 @@ public class ReadXML {
             NodeList nodeList = doc.getElementsByTagName("Организация");
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
+            //перебираем организации
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node node = nodeList.item(i);
 
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
 
-                    long ogrnLong = Long.parseLong(element.getElementsByTagName("ОГРН").item(0).getTextContent()); //тут нужен TRY CATCH
+                    //читаем ОРГН организации из файла. Если такого нет в коллекции ОГРН из БД, то добавляем в результирующую коллекцию
+                    long ogrnLong=0;
+                    try {
+                         ogrnLong = Long.parseLong(element.getElementsByTagName("ОГРН").item(0).getTextContent());
+                    } catch (NumberFormatException e){
+                        System.out.println("ОШИБКА парсинга ОГРН из файла в Long!");
+                        e.printStackTrace();
+                    }
 
-                    //если такого ОГРН в БД нет, то добавляем организацию в Map
+                    //если такого ОГРН в БД нет, то добавляем организацию
                     if (!ogrnSetFromDB.contains(ogrnLong)) {
 
                         Organization organization = new Organization();
@@ -60,6 +71,7 @@ public class ReadXML {
                             Date registrationDate = dateFormat.parse(dateStr);
                             organization.setDate(registrationDate);
                         } catch (ParseException e) {
+                            System.out.println("ОШИБКА парсинга даты из файла!");
                             e.printStackTrace();
                         }
                         result.add(organization);
@@ -67,11 +79,12 @@ public class ReadXML {
                 }
             }
 
-            //проверка
+            //вывод информации
             System.out.println("Из XML прочитано организаций: " + nodeList.getLength());
             System.out.println("Будет загружено в БД: " + result.size());
 
         } catch (ParserConfigurationException | SAXException | IOException e) {
+            System.out.println("ОШИБКА чтения из файла!");
             e.printStackTrace();
         }
 

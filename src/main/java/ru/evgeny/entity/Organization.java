@@ -1,4 +1,4 @@
-package ru.evgeny;
+package ru.evgeny.entity;
 
 import lombok.*;
 
@@ -9,7 +9,6 @@ import java.util.Objects;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 public class Organization {
     private long ogrn;
     private String inn;
@@ -28,7 +27,7 @@ public class Organization {
        return ogrn == org.ogrn;
     }
 
-    @Override
+    @Override // переопределяем чтобы сравнивать только по ОГРН
     public int hashCode() {
        return Objects.hash(ogrn);
     }
