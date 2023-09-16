@@ -1,9 +1,13 @@
 package ru.evgeny.entity;
 
 import lombok.*;
-
 import java.util.Date;
 import java.util.Objects;
+
+/*
+  Класс, который хранит сведения об организации.
+  Переопределены методы equals и hashcode для сравнения по уникальному полю long ogrn.
+*/
 
 @AllArgsConstructor
 @NoArgsConstructor

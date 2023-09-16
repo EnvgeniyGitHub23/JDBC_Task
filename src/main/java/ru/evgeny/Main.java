@@ -2,25 +2,32 @@ package ru.evgeny;
 
 import ru.evgeny.xml.ManagerXML;
 import ru.evgeny.service.PostgresDB;
-
 import java.sql.SQLException;
+
+/*
+    Главный класс с методом main.
+    Принимает на вход параметры для:
+    1) создания тестового XML файла;
+    2) загрузки файла в БД (требуется логин и пароль для БД). Автоматически создается новая схема и таблица organization;
+    3) удаление данных из таблицы organization;
+    4) удаление схемы и талицы;
+*/
 
 
 public class Main {
     public static void main(String[] args) throws SQLException {
 
         String user = "postgres";        // логин БД!!!
-        String password = "password";    //пароль БД!!!
+        String password = "SQLRootPass";    //пароль БД!!!
 
           //Аргументы командной строки, только по одной строке за запуск
 //        args = new String[]{"createXML", "20"};  // создать тестовый файл с N записей (1-10000)
-//        args = new String[]{"load", user, password};   // загрузить файл в БД
+        args = new String[]{"load", user, password};   // загрузить файл в БД
 //        args = new String[]{"deleteData", user, password};  // удалить данные из таблицы
 //        args = new String[]{"deleteSchema", user, password}; // удалить таблицу и схему
 
-
+        //если переданы аргументы
         if (args.length > 0) {
-
 
             if (args[0].equals("createXML")) { //генерируем XML файл с тестовыми данными
                 if (args.length > 1) {
@@ -38,19 +45,19 @@ public class Main {
 
 
             if (args[0].equals("deleteSchema")) { //удаляем схему и таблицу
-                checkLoginToDBInput(args);
+                checkLoginToDBInput(args); //проверка, что переданы логин и пароль для БД
                 new PostgresDB(args[1], args[2]).deleteSchemaAndTable();
             } else
 
 
             if (args[0].equals("deleteData")) { //удаляем только данные из таблицы
-                checkLoginToDBInput(args);
+                checkLoginToDBInput(args); //проверка, что переданы логин и пароль для БД
                 new PostgresDB(args[1], args[2]).deleteDataFromTable();
             } else
 
 
             if (args[0].equals("load")) { // загружаем данные из файла в БД
-                checkLoginToDBInput(args);
+                checkLoginToDBInput(args); //проверка, что переданы логин и пароль для БД
                 new PostgresDB(args[1], args[2]).loadDataToDB(new ManagerXML());
             } else {
                 printHint(); //если ничего не подошло то вывод подсказки
@@ -76,4 +83,4 @@ public class Main {
         System.out.println("Для удаления схемы из БД ведите deleteSchema user password ");
         System.out.println("*****************************************************************************");
     }
-}//class
+}

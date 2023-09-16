@@ -17,6 +17,15 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+/*
+  Класс для работы с XML файлами.
+  Содержит:
+   - метод createSampleFile для создания файла с тестовыми данными;
+   - метод readFIle для чтения данных об организациях из файла.
+   Метод принимает список ОГРН, которые уже есть в базе, читает из файла уникальные (по ОГРН) записи организаций,
+   и добавляет в результирующую коллекцию Set только те записи, которых нет в БД.
+*/
+
 public class ManagerXML {
 
 
@@ -48,7 +57,7 @@ public class ManagerXML {
 
                     //читаем ОРГН организации из файла. Если такого нет в коллекции ОГРН из БД, то добавляем в результирующую коллекцию
                     long ogrnLong=0;
-                    try {
+                    try { //проверка парсинга
                         ogrnLong = Long.parseLong(element.getElementsByTagName("ОГРН").item(0).getTextContent());
                     } catch (NumberFormatException e){
                         System.out.println("ОШИБКА парсинга ОГРН из файла в Long!");
@@ -60,7 +69,7 @@ public class ManagerXML {
 
                         Organization organization = new Organization();
 
-                        organization.setOgrn(Long.parseLong(element.getElementsByTagName("ОГРН").item(0).getTextContent())); //нужна проверка try catch
+                        organization.setOgrn(ogrnLong); // берем ранее порлученное значение Long
                         organization.setInn(element.getElementsByTagName("ИНН").item(0).getTextContent());
                         organization.setName(element.getElementsByTagName("Название").item(0).getTextContent());
                         organization.setAddress(element.getElementsByTagName("Адрес").item(0).getTextContent());
@@ -97,7 +106,7 @@ public class ManagerXML {
 
     public static void createSampleFile(int countOfOrganizations) { //метод для создания тестового XML файла с данными
 
-        try {
+        try { //подготовка XML
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.newDocument();
@@ -109,31 +118,31 @@ public class ManagerXML {
             for (int i = 1; i <= countOfOrganizations; i++) {
                 Element organization = doc.createElement("Организация");
 
-                //ОГРН 13 знаков
+                //ОГРН 13 знаков, получаем сложением 1000000000000L + i
                 Element ogrn = doc.createElement("ОГРН");
                 Text ogrnText = doc.createTextNode(String.valueOf(1000000000000L + i));
                 ogrn.appendChild(ogrnText);
 
-                //ИНН 12 знаков
+                //ИНН 12 знаков, получаем сложением 100000000000L + i
                 Element inn = doc.createElement("ИНН");
                 Text innText = doc.createTextNode(String.valueOf(100000000000L + i));
                 inn.appendChild(innText);
 
-                //название организации
+                //название организации ООО "Фирма_N"
                 Element name = doc.createElement("Название");
                 Text nameText = doc.createTextNode("ООО \"Фирма_" + i + "\"");
                 name.appendChild(nameText);
 
-                //адрес организации
+                //адрес организации, № дома от 1 до 100, офис от 1 до 600
                 Element address  = doc.createElement("Адрес");
                 int buildingInRange1To100 = ((i - 1) % 100) + 1;
                 int officeInRange1To600 = ((i - 1) % 600) + 1;
                 Text addressText = doc.createTextNode("Город, улица Улица, д." + buildingInRange1To100 + " офис:" + officeInRange1To600 );
                 address.appendChild(addressText);
 
-                //директор
+                //директор: Иванов с переменными инициалами A-Ш
                 Element director = doc.createElement("Директор");
-                char letter = (char) ('А' + ((i - 1) % 25));
+                char letter = (char) ('А' + ((i - 1) % 24));
                 Text directorText = doc.createTextNode("Иванов " + letter + "." + (++letter) + ".");
                 director.appendChild(directorText);
 
@@ -164,7 +173,7 @@ public class ManagerXML {
 
             transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes"); //вкл. форматирование данных в файле (чтобы не в одну строку)
 
-            //создание в текущей папке файла organizations_sample_data.xml"
+            //создание в текущей папке файла: organizations_sample_data.xml
             File xmlFile = new File("organizations_sample_data.xml");
             StreamResult result = new StreamResult(xmlFile);
 
@@ -177,17 +186,17 @@ public class ManagerXML {
 
     private static String generateRandomDate() { // метод генерирует случайные даты с 01.01.2000 по наст. время
 
-        Calendar startCalendar = new GregorianCalendar(2000, Calendar.JANUARY, 1);
-        Calendar endCalendar = Calendar.getInstance();
+        Calendar startCalendar = new GregorianCalendar(2000, Calendar.JANUARY, 1); //начальная дата
+        Calendar endCalendar = Calendar.getInstance(); //получаем текущую дату
 
-        long startTimeInMillis = startCalendar.getTimeInMillis();
-        long endTimeInMillis = endCalendar.getTimeInMillis();
+        long startTimeInMillis = startCalendar.getTimeInMillis(); //начальное значание в миллисекундах
+        long endTimeInMillis = endCalendar.getTimeInMillis();     //конечное значание в миллисекундах
 
         //случайное значение в миллисекундах из диапазона с 01.01.2000 по наст. время
         Random random = new Random();
         long randomTimeInMillis = startTimeInMillis + (long) (random.nextDouble() * (endTimeInMillis - startTimeInMillis));
 
-        //форматирование даты
+        //форматирование даты в "dd.MM.yyyy"
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         String formattedDate = dateFormat.format(randomTimeInMillis);
 

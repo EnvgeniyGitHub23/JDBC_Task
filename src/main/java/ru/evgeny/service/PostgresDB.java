@@ -7,12 +7,26 @@ import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
 
+/*
+  Класс для работы с БД PostrgeSQL (jdbc:postgresql://localhost:5432/postgres).
+  В конструкторе принимает логин и пароль для подключения к БД.
+  Содержит:
+   - метод private connect() для создания подключения к БД;
+   - метод public loadDataToDB(), который:
+        1) создает новую схему metaprimetask и таблицу organization, если они еще не созданы (createNewSchemaAndTable);
+        2) читает ОГРН из БД (getAllOgrnFromDB);
+        3) читаем из XML организации, ОГРН которых нет в БД (вызывает метод readFIle класса ManagerXML);
+        4) записывает в БД прочитанную из файла коллекцию организаций (writeToDB);
+
+   - метод public deleteData удаляет все записи из таблицы organization;
+   - метод public deleteSchemaAndTable удаляет схему metaprimetask и таблицу organization.
+*/
+
 @AllArgsConstructor
 public class PostgresDB {
 
     private  String user; //данные для подключения к БД устанавливаются в конструкторе при создании экземпляра
     private  String password;
-
 
 
     private Connection connect() { //приватный метод для подключения к БД
@@ -30,6 +44,7 @@ public class PostgresDB {
         }
         return connection;
     }
+
 
 
     private void createNewSchemaAndTable(Connection connection) throws SQLException { //метод для создания схемы и таблицы в БД (если он еще не созданы)
@@ -80,7 +95,7 @@ public class PostgresDB {
 
 
 
-    private Set<Long> getAllOgrnFromDB(Connection connection) throws SQLException { //метод для получения сета ОГРН из БД
+    private Set<Long> getAllOgrnFromDB(Connection connection) throws SQLException { //метод для получения Set ОГРН из БД (с проверкой существования таблицы)
 
         Set<Long> allOgrn = new HashSet<>();
 
@@ -193,7 +208,10 @@ public class PostgresDB {
             Set<Organization> organizationsSetToDB = managerXML.readFIle(ogrnSetFromDB);
 
             //записываем в БД прочитанную из файла коллекцию организаций
-            writeToDB(organizationsSetToDB, connection);
+            if(organizationsSetToDB.size()>0){
+                writeToDB(organizationsSetToDB, connection);
+            }
+
 
         } catch (SQLException e){
             System.out.println("ОШИБКА записи в БД!");
